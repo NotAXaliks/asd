@@ -1,0 +1,193 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:ProDay"
+             x:Class="ProDay.App"
+             RequestedThemeVariant="Dark">
+
+    <Application.Resources>
+        <SolidColorBrush x:Key="Bg" Color="#111318"/>
+        <SolidColorBrush x:Key="Surface" Color="#181B22"/>
+        <SolidColorBrush x:Key="Surface2" Color="#20242D"/>
+        <SolidColorBrush x:Key="Stroke" Color="#2A2F3A"/>
+        <SolidColorBrush x:Key="TextB" Color="#E8EAED"/>
+        <SolidColorBrush x:Key="Muted" Color="#8B93A1"/>
+        <SolidColorBrush x:Key="Accent" Color="#4C8DFF"/>
+        <SolidColorBrush x:Key="Money" Color="#3FB950"/>
+        <SolidColorBrush x:Key="Free" Color="#3FB950"/>
+        <SolidColorBrush x:Key="Busy" Color="#E5534B"/>
+        <SolidColorBrush x:Key="Off" Color="#545D68"/>
+        <SolidColorBrush x:Key="Warn" Color="#D29922"/>
+        <local:HexToBrush x:Key="HexToBrush"/>
+        <StreamGeometry x:Key="PowerIcon">M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13</StreamGeometry>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextB}"/>
+        </Style>
+        <Style Selector="TextBlock.muted">
+            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+        </Style>
+        <Style Selector="TextBlock.caption">
+            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TextBlock.num">
+            <Setter Property="FontFeatures" Value="+tnum"/>
+        </Style>
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{StaticResource Surface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Stroke}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="14"/>
+        </Style>
+
+        <!-- Тайл ПК -->
+        <Style Selector="Border.pc">
+            <Setter Property="Background" Value="{StaticResource Surface2}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Stroke}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.pc.off">
+            <Setter Property="Opacity" Value="0.6"/>
+        </Style>
+        <Style Selector="Border.stripe">
+            <Setter Property="Width" Value="4"/>
+            <Setter Property="CornerRadius" Value="8,0,0,8"/>
+            <Setter Property="Background" Value="{StaticResource Off}"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.3"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.stripe.free"><Setter Property="Background" Value="{StaticResource Free}"/></Style>
+        <Style Selector="Border.stripe.busy"><Setter Property="Background" Value="{StaticResource Busy}"/></Style>
+        <Style Selector="Border.stripe.expiring"><Setter Property="Background" Value="{StaticResource Warn}"/></Style>
+
+        <Style Selector="Ellipse.dot">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Fill" Value="{StaticResource Off}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Ellipse.dot.free"><Setter Property="Fill" Value="{StaticResource Free}"/></Style>
+        <Style Selector="Ellipse.dot.busy"><Setter Property="Fill" Value="{StaticResource Busy}"/></Style>
+
+        <Style Selector="TextBlock.timer.expiring">
+            <Setter Property="Foreground" Value="{StaticResource Warn}"/>
+        </Style>
+
+        <Style Selector="Button.tile">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.tile:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.tile:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.tile:pointerover Border.pc">
+            <Setter Property="BorderBrush" Value="#3B4252"/>
+        </Style>
+
+        <Style Selector="Ellipse.live">
+            <Style.Animations>
+                <Animation Duration="0:0:2" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+                    <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.3"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Бары графиков -->
+        <Style Selector="Border.vbar">
+            <Setter Property="CornerRadius" Value="3,3,0,0"/>
+            <Setter Property="Margin" Value="3,0"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="Background" Value="#3A4A66"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Height" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.vbar.hl">
+            <Setter Property="Background" Value="{StaticResource Accent}"/>
+        </Style>
+        <Style Selector="Border.hbar">
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Width" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Журнал -->
+        <Style Selector="Border.log">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:1.5"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.log.new">
+            <Setter Property="Background" Value="#1F4C8DFF"/>
+        </Style>
+
+        <!-- Переключатель -->
+        <Style Selector="RadioButton.seg">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="b" CornerRadius="4" Padding="10,3" Background="Transparent">
+                        <ContentPresenter Content="{TemplateBinding Content}" Foreground="{StaticResource Muted}" FontSize="12"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="RadioButton.seg:checked /template/ Border#b">
+            <Setter Property="Background" Value="{StaticResource Surface2}"/>
+        </Style>
+        <Style Selector="RadioButton.seg:checked /template/ ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource TextB}"/>
+        </Style>
+
+        <Style Selector="TextBlock.fade">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5"/>
+                </Transitions>
+            </Setter>
+        </Style>
+    </Application.Styles>
+</Application>

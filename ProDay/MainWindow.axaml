@@ -1,0 +1,291 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:ProDay"
+        xmlns:core="using:Club.Core"
+        x:Class="ProDay.MainWindow"
+        x:DataType="local:MainWindowViewModel"
+        Title="NEON ARENA — администратор"
+        WindowState="Maximized" MinWidth="1280" MinHeight="800"
+        Background="{StaticResource Bg}">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" ColumnDefinitions="*,360" Margin="16,12,16,14">
+
+        <!-- Шапка -->
+        <Grid Grid.ColumnSpan="2" ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,12">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <TextBlock Text="NEON ARENA" FontSize="20" FontWeight="Bold"/>
+                <TextBlock Classes="muted" Text="Компьютерный клуб · панель администратора" FontSize="13" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                <TextBlock Text="{Binding ErrorText, StringFormat='Нет связи с БД: {0}'}" Foreground="{StaticResource Busy}"
+                           IsVisible="{Binding !DbOnline}" MaxWidth="420" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Ellipse Classes="live" Width="8" Height="8" Fill="{StaticResource Free}"/>
+                    <TextBlock Classes="muted" Text="онлайн" FontSize="13"/>
+                </StackPanel>
+                <TextBlock Classes="num" Text="{Binding Clock}" FontSize="18" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock Text="Авто-режим" VerticalAlignment="Center" FontSize="13"/>
+                    <ToggleSwitch IsChecked="{Binding IsSimulation}" OnContent="" OffContent="" MinWidth="0"/>
+                </StackPanel>
+                <Button Content="Сброс демо" Command="{Binding ResetDemoCommand}" ToolTip.Tip="Сгенерировать свежие данные за 7 дней"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- KPI -->
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="1.35*,*,1.15*,*,*,*" Margin="0,0,0,12">
+            <Border Classes="card" Margin="0,0,6,0">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="caption" Text="Выручка за смену"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="num" Text="{Binding RevenueText}" FontSize="32" FontWeight="SemiBold"/>
+                        <TextBlock Classes="fade num" Text="{Binding IncrementText}" Opacity="{Binding IncrementOpacity}"
+                                   FontSize="16" Foreground="{StaticResource Money}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding VsYesterdayText}" FontSize="13"
+                               Classes.up="{Binding VsYesterdayUp}" Foreground="{StaticResource Busy}">
+                        <TextBlock.Styles>
+                            <Style Selector="TextBlock.up"><Setter Property="Foreground" Value="{StaticResource Money}"/></Style>
+                        </TextBlock.Styles>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="card" Margin="6,0">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="caption" Text="Прогноз на месяц"/>
+                    <TextBlock Classes="num" Text="{Binding ForecastText}" FontSize="24" FontWeight="SemiBold"/>
+                    <TextBlock Classes="muted" Text="по средней за неделю" FontSize="12"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="card" Margin="6,0">
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="caption" Text="Загрузка зала"/>
+                    <TextBlock Classes="num" Text="{Binding OccupancyText}" FontSize="22" FontWeight="SemiBold"/>
+                    <ProgressBar Value="{Binding Occupancy}" Maximum="100" Height="4" MinHeight="4" CornerRadius="2" Foreground="{StaticResource Accent}" Background="{StaticResource Surface2}"/>
+                    <TextBlock Text="{Binding LostText}" FontSize="12" Foreground="{StaticResource Warn}"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="3" Classes="card" Margin="6,0">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="caption" Text="Средний чек"/>
+                    <TextBlock Classes="num" Text="{Binding AvgCheckText}" FontSize="24" FontWeight="SemiBold"/>
+                    <TextBlock Classes="muted" Text="{Binding BarPerSessionText}" FontSize="12"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="4" Classes="card" Margin="6,0">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="caption" Text="На балансах клиентов"/>
+                    <TextBlock Classes="num" Text="{Binding BalancesText}" FontSize="24" FontWeight="SemiBold"/>
+                    <TextBlock Classes="muted" Text="{Binding TopUpsText}" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="5" Classes="card" Margin="6,0,0,0">
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="caption" Text="Окупаемость клуба"/>
+                    <TextBlock Classes="num" Text="{Binding PaybackText}" FontSize="22" FontWeight="SemiBold"/>
+                    <ProgressBar Value="{Binding Payback}" Maximum="100" Height="4" MinHeight="4" CornerRadius="2" Foreground="{StaticResource Money}" Background="{StaticResource Surface2}"/>
+                    <TextBlock Classes="muted" Text="{Binding PaybackSubText}" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Карта зала -->
+        <Border Grid.Row="2" Classes="card" Margin="0,0,6,0" Padding="10">
+            <Grid RowDefinitions="Auto,*">
+                <Grid ColumnDefinitions="*,Auto" Margin="6,2,6,4">
+                    <TextBlock Classes="title" Text="Зал"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14">
+                        <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse Classes="dot free"/><TextBlock Classes="muted" Text="Свободен" FontSize="12"/></StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse Classes="dot busy"/><TextBlock Classes="muted" Text="Занят" FontSize="12"/></StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse Classes="dot"/><TextBlock Classes="muted" Text="Выключен" FontSize="12"/></StackPanel>
+                    </StackPanel>
+                </Grid>
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Pcs}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><UniformGrid Columns="3" Rows="3"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="core:PcVm">
+                            <Button Classes="tile">
+                                <Button.Flyout>
+                                    <MenuFlyout Placement="Bottom">
+                                        <MenuItem Header="{Binding PowerText}" Command="{Binding TogglePowerCommand}"/>
+                                        <MenuItem Header="Сессия 1 час" Command="{Binding QuickStartCommand}" CommandParameter="60" IsVisible="{Binding !IsBusy}"/>
+                                        <MenuItem Header="Сессия 30 мин" Command="{Binding QuickStartCommand}" CommandParameter="30" IsVisible="{Binding !IsBusy}"/>
+                                        <MenuItem Header="Продлить на 30 мин" Command="{Binding ExtendCommand}" IsVisible="{Binding IsBusy}"/>
+                                        <MenuItem Header="Завершить сессию" Command="{Binding EndCommand}" IsVisible="{Binding IsBusy}"/>
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                                <Border Classes="pc" Classes.off="{Binding IsOff}">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Border Classes="stripe" Classes.free="{Binding IsFree}" Classes.busy="{Binding IsBusy}"
+                                                Classes.expiring="{Binding IsExpiring}"/>
+                                        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="14,12">
+                                            <!-- верх -->
+                                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                                <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="SemiBold"/>
+                                                <TextBlock Grid.Column="1" Text="VIP" Classes="muted" FontSize="12" Margin="8,0,0,0"
+                                                           VerticalAlignment="Center" IsVisible="{Binding IsVip}"/>
+                                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6">
+                                                    <Ellipse Classes="dot" Classes.free="{Binding IsFree}" Classes.busy="{Binding IsBusy}"/>
+                                                    <TextBlock Text="{Binding StatusText}" FontSize="13" Classes="muted"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- занят -->
+                                            <Grid Grid.Row="1" VerticalAlignment="Center" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" IsVisible="{Binding IsBusy}">
+                                                <StackPanel VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding GameName}" FontSize="17" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding Player}" Classes="muted" FontSize="13"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Classes="num timer" Classes.expiring="{Binding IsExpiring}"
+                                                           Text="{Binding RemainingText}" FontSize="26" VerticalAlignment="Center"/>
+                                                <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Value="{Binding Progress}" Maximum="100" Height="3" MinHeight="3"
+                                                             CornerRadius="2" Foreground="{StaticResource Busy}" Background="{StaticResource Stroke}" Margin="0,10,0,0"/>
+                                            </Grid>
+
+                                            <!-- свободен / выключен -->
+                                            <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6" IsVisible="{Binding !IsBusy}">
+                                                <PathIcon Data="{StaticResource PowerIcon}" Width="28" Height="28" Foreground="{StaticResource Muted}"/>
+                                                <TextBlock Classes="muted" Text="{Binding RateText}" HorizontalAlignment="Center" FontSize="13"/>
+                                            </StackPanel>
+
+                                            <!-- низ -->
+                                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                                <TextBlock Classes="num muted" FontSize="13" Text="{Binding TodayRevenueText, StringFormat='За смену: {0}'}"/>
+                                                <TextBlock Grid.Column="1" Text="лидер смены" FontSize="12" Foreground="{StaticResource Accent}" IsVisible="{Binding IsTopEarner}"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Border>
+
+        <!-- Журнал -->
+        <Border Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" Classes="card" Margin="6,0,0,0" Padding="10">
+            <Grid RowDefinitions="Auto,*">
+                <TextBlock Classes="title" Text="Журнал событий" Margin="6,2,6,8"/>
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding Log}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:LogItemVm">
+                                <Border Classes="log" Classes.new="{Binding IsNew}">
+                                    <Grid ColumnDefinitions="Auto,60,*">
+                                        <Ellipse Width="6" Height="6" Fill="{Binding Color, Converter={StaticResource HexToBrush}}"
+                                                 VerticalAlignment="Top" Margin="0,6,10,0"/>
+                                        <TextBlock Grid.Column="1" Classes="muted num" Text="{Binding Time}" FontSize="12" Margin="0,1,0,0"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Message}" TextWrapping="Wrap" FontSize="13"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Графики -->
+        <Grid Grid.Row="3" ColumnDefinitions="1.4*,*,*" Margin="0,12,6,0">
+            <!-- выручка -->
+            <Border Classes="card" Margin="0,0,6,0">
+                <Grid RowDefinitions="Auto,110,Auto">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                        <TextBlock Classes="title" Text="Выручка" VerticalAlignment="Center"/>
+                        <Border Grid.Column="1" Background="{StaticResource Bg}" CornerRadius="6" Padding="2">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Classes="seg" Content="12 минут" IsChecked="{Binding ShowMinutes, Mode=OneWay}" GroupName="rv"/>
+                                <RadioButton Classes="seg" Content="7 дней" IsChecked="{Binding ShowDaily}" GroupName="rv"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MinuteBars}" IsVisible="{Binding ShowMinutes}" ClipToBounds="True">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:BarVm">
+                                <Border Classes="vbar" Classes.hl="{Binding Highlight}" Height="{Binding Size}" ToolTip.Tip="{Binding ValueText}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl Grid.Row="2" ItemsSource="{Binding MinuteBars}" IsVisible="{Binding ShowMinutes}" Margin="0,4,0,0">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:BarVm">
+                                <TextBlock Classes="muted" Text="{Binding Label}" FontSize="11" HorizontalAlignment="Center"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding DailyBars}" IsVisible="{Binding ShowDaily}" ClipToBounds="True">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:BarVm">
+                                <Border Classes="vbar" Classes.hl="{Binding Highlight}" Height="{Binding Size}" Margin="10,0" ToolTip.Tip="{Binding ValueText}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl Grid.Row="2" ItemsSource="{Binding DailyBars}" IsVisible="{Binding ShowDaily}" Margin="0,4,0,0">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:BarVm">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Classes="muted" Text="{Binding Label}" FontSize="11" HorizontalAlignment="Center"/>
+                                    <TextBlock Classes="muted num" Text="{Binding ValueText}" FontSize="10" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
+
+            <!-- игры -->
+            <Border Grid.Column="1" Classes="card" Margin="6,0">
+                <StackPanel Spacing="6">
+                    <TextBlock Classes="title" Text="Выручка по играм" Margin="0,0,0,2"/>
+                    <ItemsControl ItemsSource="{Binding GameBars}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:BarVm">
+                                <Grid ColumnDefinitions="84,*,70" Margin="0,3">
+                                    <TextBlock Text="{Binding Label}" FontSize="13" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Classes="hbar" Width="{Binding Size}" VerticalAlignment="Center"
+                                            Background="{Binding Color, Converter={StaticResource HexToBrush}}" Opacity="0.85"/>
+                                    <TextBlock Grid.Column="2" Classes="num" Text="{Binding ValueText}" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- структура -->
+            <Border Grid.Column="2" Classes="card" Margin="6,0,0,0">
+                <StackPanel Spacing="12">
+                    <TextBlock Classes="title" Text="Структура выручки"/>
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Spacing="2">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Classes="dot" Fill="{StaticResource Accent}"/>
+                                <TextBlock Classes="muted" Text="Игровое время" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock Classes="num" Text="{Binding GameRevenueText}" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding GameShareText}" Classes="muted" FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Classes="dot" Fill="{StaticResource Warn}"/>
+                                <TextBlock Classes="muted" Text="Бар и еда" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock Classes="num" Text="{Binding BarRevenueText}" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding BarShareText}" Classes="muted" FontSize="12"/>
+                        </StackPanel>
+                    </Grid>
+                    <ProgressBar Value="{Binding GameShare}" Maximum="100" Height="8" MinHeight="8" CornerRadius="2"
+                                 Foreground="{StaticResource Accent}" Background="{StaticResource Warn}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

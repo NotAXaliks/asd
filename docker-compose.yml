@@ -1,0 +1,25 @@
+# Сервер стенда: БД + страница брони для телефонов.
+# Запуск на сервере: docker compose up -d --build   (пароль БД — в .env рядом, в git не кладём)
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: proday
+      POSTGRES_USER: xaliks
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?задай DB_PASSWORD в .env}
+    ports: ["127.0.0.1:40001:5432"]   # наружу не торчит: с ноутбука через ssh-туннель
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql:ro
+
+  phone:
+    build: { context: ., dockerfile: Phone/Dockerfile }
+    restart: unless-stopped
+    environment:
+      PRODAY_DB: Host=db;Port=5432;Database=proday;Username=xaliks;Password=${DB_PASSWORD};SSL Mode=Disable
+    ports: ["5080:5080"]
+    depends_on: [db]
+
+volumes:
+  pgdata:

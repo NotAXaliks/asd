@@ -53,8 +53,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private string _toast = "";
     [ObservableProperty] private double _toastOpacity;
 
-    public string PhoneUrl => PhoneServer.Url;
-    public Bitmap PhoneQr { get; } = new(new MemoryStream(PngByteQRCodeHelper.GetQRCode(PhoneServer.Url, QRCodeGenerator.ECCLevel.M, 10)));
+    // Страница брони для телефонов (проект Phone, крутится на сервере)
+    public string PhoneUrl { get; } = Environment.GetEnvironmentVariable("PRODAY_PHONE_URL") ?? "http://213.226.112.230:5080/";
+    public Bitmap PhoneQr => new(new MemoryStream(PngByteQRCodeHelper.GetQRCode(PhoneUrl, QRCodeGenerator.ECCLevel.M, 10)));
 
     public bool ShowMinutes => !ShowDaily;
     partial void OnShowDailyChanged(bool value) => OnPropertyChanged(nameof(ShowMinutes));
@@ -65,7 +66,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel()
     {
-        PhoneServer.Start();
         new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Normal, async (_, _) => await Refresh()).Start();
         new DispatcherTimer(TimeSpan.FromMilliseconds(30), DispatcherPriority.Render, (_, _) => AnimateRevenue()).Start();
         new DispatcherTimer(TimeSpan.FromSeconds(2), DispatcherPriority.Normal, async (_, _) =>
@@ -104,7 +104,7 @@ public partial class MainWindowViewModel : ObservableObject
                 var item = LogItemVm.From(a, !_first);
                 Log.Insert(0, item);
                 if (!_first) _ = UnmarkLater(item);
-                if (!_first && a.Source == PhoneServer.Source && a.Type != "game") _ = ShowToast(a.Message);
+                if (!_first && a.Source == "mobile" && a.Type != "game") _ = ShowToast(a.Message);
             }
             if (log.Count > 0) _lastLogId = Math.Max(_lastLogId, log.Max(a => a.Id));
             while (Log.Count > 80) Log.RemoveAt(Log.Count - 1);

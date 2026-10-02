@@ -56,3 +56,6 @@ coverage*.xml
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Пароли для сервера
+.env

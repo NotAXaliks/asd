@@ -70,7 +70,9 @@ public class TopUp
 
 public class ClubDb : DbContext
 {
-    public const string Conn = "Host=127.0.0.1;Port=40001;Database=proday;Username=xaliks;Password=coolPaSsw0rd;SSL Mode=Disable;Include Error Detail=true";
+    // По умолчанию — локальный docker; для стенда и сервера строка задаётся в переменной окружения PRODAY_DB
+    public static readonly string Conn = Environment.GetEnvironmentVariable("PRODAY_DB")
+        ?? "Host=127.0.0.1;Port=40001;Database=proday;Username=xaliks;Password=coolPaSsw0rd;SSL Mode=Disable;Include Error Detail=true";
 
     public DbSet<Game> Games => Set<Game>();
     public DbSet<Pc> Pcs => Set<Pc>();

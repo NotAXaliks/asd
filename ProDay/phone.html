@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEON ARENA</title>
+<style>
+  :root { --bg:#111318; --s:#181B22; --s2:#20242D; --st:#2A2F3A; --t:#E8EAED; --m:#8B93A1; --a:#4C8DFF; --ok:#3FB950; --busy:#E5534B; --warn:#D29922; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--t); font:15px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding:16px; max-width:480px; margin-inline:auto; }
+  h1 { font-size:20px; margin:4px 0 2px; }
+  .m { color:var(--m); font-size:13px; }
+  .card { background:var(--s); border:1px solid var(--st); border-radius:10px; padding:14px; margin-top:14px; }
+  label { display:block; color:var(--m); font-size:13px; margin-bottom:6px; }
+  input { width:100%; background:var(--s2); border:1px solid var(--st); color:var(--t); border-radius:8px; padding:12px; font-size:16px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { border:1px solid var(--st); background:var(--s2); color:var(--t); border-radius:8px; padding:9px 12px; font-size:14px; }
+  .chip.on { border-color:var(--a); background:#1F4C8DFF; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .pc { border:1px solid var(--st); background:var(--s2); border-radius:8px; padding:10px 8px; text-align:left; color:var(--t); border-left:4px solid var(--m); }
+  .pc b { display:block; font-size:15px; }
+  .pc span { font-size:12px; color:var(--m); }
+  .pc.free { border-left-color:var(--ok); }
+  .pc.busy { border-left-color:var(--busy); opacity:.55; }
+  .pc.off { opacity:.35; }
+  .pc.on { border-color:var(--a); background:#1F4C8DFF; }
+  button { font:inherit; cursor:pointer; }
+  .go { width:100%; margin-top:14px; padding:14px; border:0; border-radius:10px; background:var(--a); color:#fff; font-size:16px; font-weight:600; }
+  .go:disabled { opacity:.4; }
+  .err { color:var(--busy); font-size:14px; margin-top:10px; min-height:1em; }
+  .big { font-size:44px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .big.warn { color:var(--warn); }
+  .bar { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .bar button { text-align:left; }
+  .ok { color:var(--ok); font-size:14px; margin-top:10px; min-height:1em; }
+</style>
+</head>
+<body>
+<h1>NEON ARENA</h1>
+<div class="m">Компьютерный клуб · бронь с телефона</div>
+
+<div id="book">
+  <div class="card">
+    <label for="nick">Твой ник — он появится на большом экране</label>
+    <input id="nick" maxlength="16" autocomplete="off" placeholder="например, Shadow">
+  </div>
+  <div class="card">
+    <label>Во что играем</label>
+    <div class="row" id="games"></div>
+  </div>
+  <div class="card">
+    <label>Выбери свободный ПК</label>
+    <div class="grid" id="pcs"></div>
+  </div>
+  <button class="go" id="go" disabled>Забронировать</button>
+  <div class="err" id="err"></div>
+</div>
+
+<div id="mine" hidden>
+  <div class="card">
+    <div class="m" id="mineTitle"></div>
+    <div class="big" id="left">0:00</div>
+    <div class="m">Найди свой ник на большом экране у стенда</div>
+    <button class="go" id="ext">Продлить</button>
+  </div>
+  <div class="card">
+    <label>Заказать к своему ПК</label>
+    <div class="bar" id="menu"></div>
+    <div class="ok" id="okMsg"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let state = null, pick = { pc: null, game: null }, leftAt = 0;
+let me = null;
+try { me = JSON.parse(localStorage.getItem('me')); } catch {}
+try { $('nick').value = localStorage.getItem('nick') || ''; } catch {}
+
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  const data = await r.json().catch(() => null);
+  if (!r.ok) throw new Error(typeof data === 'string' ? data : 'Нет связи с клубом');
+  return data;
+}
+
+function fmt(s) { s = Math.max(0, s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+function mySession() {
+  if (!me || !state) return null;
+  const pc = state.pcs.find(p => p.id === me.pc);
+  return pc && pc.status === 'busy' && pc.player === me.nick ? pc : null;
+}
+
+function render() {
+  const mine = mySession();
+  $('book').hidden = !!mine;
+  $('mine').hidden = !mine;
+  if (mine) {
+    $('mineTitle').textContent = `${mine.name} · ${mine.gameName} · ${me.nick}`;
+    leftAt = Date.now() + mine.left * 1000;
+    tick();
+    return;
+  }
+  if (me) { $('err').textContent = 'Сессия закончилась. Можно забронировать ещё раз.'; me = null; try { localStorage.removeItem('me'); } catch {} }
+
+  $('games').replaceChildren(...state.games.map(g => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (pick.game === g.id ? ' on' : '');
+    b.textContent = g.name;
+    b.onclick = () => { pick.game = g.id; render(); };
+    return b;
+  }));
+  $('pcs').replaceChildren(...state.pcs.map(p => {
+    const b = document.createElement('button');
+    if (pick.pc === p.id && p.status !== 'free') pick.pc = null;
+    b.className = `pc ${p.status}` + (pick.pc === p.id ? ' on' : '');
+    b.disabled = p.status !== 'free';
+    b.innerHTML = `<b></b><span></span>`;
+    b.firstChild.textContent = p.name + (p.zone === 'VIP' ? ' VIP' : '');
+    b.lastChild.textContent = p.status === 'free' ? 'свободен' : p.status === 'busy' ? 'занят ' + fmt(p.left) : 'выключен';
+    b.onclick = () => { pick.pc = p.id; render(); };
+    return b;
+  }));
+  $('go').disabled = !(pick.pc && pick.game && $('nick').value.trim().length >= 2);
+}
+
+function tick() {
+  if ($('mine').hidden) return;
+  const s = Math.round((leftAt - Date.now()) / 1000);
+  $('left').textContent = fmt(s);
+  $('left').classList.toggle('warn', s < 15);
+}
+
+async function poll() {
+  try { state = await api('/api/state'); render(); } catch (e) { $('err').textContent = e.message; }
+}
+
+$('nick').oninput = render;
+
+$('go').onclick = async () => {
+  const nick = $('nick').value.trim();
+  $('go').disabled = true; $('err').textContent = '';
+  try {
+    await api('/api/book', { pcId: pick.pc, nick, gameId: pick.game });
+    me = { pc: pick.pc, nick };
+    try { localStorage.setItem('me', JSON.stringify(me)); localStorage.setItem('nick', nick); } catch {}
+    pick.pc = null;
+  } catch (e) { $('err').textContent = e.message; }
+  await poll();
+};
+
+$('ext').onclick = async () => {
+  try { await api('/api/extend', { pcId: me.pc }); $('okMsg').textContent = 'Продлено'; } catch (e) { $('okMsg').textContent = e.message; }
+  await poll();
+};
+
+poll().then(() => {
+  $('menu').replaceChildren(...(state ? state.menu : []).map(m => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = `${m.name} · ${m.price} ₽`;
+    b.onclick = async () => {
+      try { await api('/api/bar', { pcId: me.pc, item: m.id }); $('okMsg').textContent = `${m.name} уже несут к ${mySession()?.name || 'ПК'}`; }
+      catch (e) { $('okMsg').textContent = e.message; }
+    };
+    return b;
+  }));
+});
+setInterval(poll, 2000);
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

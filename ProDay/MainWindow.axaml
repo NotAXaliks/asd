@@ -168,9 +168,30 @@
 
         <!-- Журнал -->
         <Border Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" Classes="card" Margin="6,0,0,0" Padding="10">
-            <Grid RowDefinitions="Auto,*">
-                <TextBlock Classes="title" Text="Журнал событий" Margin="6,2,6,8"/>
-                <ScrollViewer Grid.Row="1">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <!-- Бронь с телефона -->
+                <Grid ColumnDefinitions="Auto,*" Margin="4,2,4,10">
+                    <Border Background="White" CornerRadius="6" Padding="6">
+                        <Image Source="{Binding PhoneQr}" Width="124" Height="124" RenderOptions.BitmapInterpolationMode="None"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="14,2,0,0" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Classes="title" Text="Займи ПК с телефона" TextWrapping="Wrap"/>
+                        <TextBlock Classes="muted" FontSize="12" TextWrapping="Wrap"
+                                   Text="Наведи камеру, выбери свободный ПК и игру — твой ник появится в зале. Можно заказать еду к своему месту."/>
+                        <TextBlock Classes="muted num" FontSize="11" Text="{Binding PhoneUrl}"/>
+                    </StackPanel>
+                </Grid>
+                <TextBlock Grid.Row="1" Classes="title" Text="Журнал событий" Margin="6,2,6,8"/>
+                <!-- всплывает поверх заголовка журнала, когда кто-то сделал что-то с телефона -->
+                <Border Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Top" ZIndex="1" Background="{StaticResource Surface2}"
+                        BorderBrush="{StaticResource Accent}" BorderThickness="1" CornerRadius="6"
+                        Padding="10,8" Opacity="{Binding ToastOpacity}" IsHitTestVisible="False">
+                    <Border.Transitions>
+                        <Transitions><DoubleTransition Property="Opacity" Duration="0:0:0.4"/></Transitions>
+                    </Border.Transitions>
+                    <TextBlock Text="{Binding Toast}" FontSize="13" TextWrapping="Wrap"/>
+                </Border>
+                <ScrollViewer Grid.Row="2">
                     <ItemsControl ItemsSource="{Binding Log}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="core:LogItemVm">

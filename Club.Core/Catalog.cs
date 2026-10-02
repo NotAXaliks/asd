@@ -65,6 +65,8 @@ public static class Biz
     // Демо идёт в ускоренном времени: любая сессия длится 10–20 реальных секунд
     public static TimeSpan RealDuration(int tariffMinutes) => TimeSpan.FromSeconds(Math.Clamp(tariffMinutes / 3.0, 10, 20));
     public static readonly TimeSpan RealExtend = TimeSpan.FromSeconds(10);
+    // Гость с телефона играет дольше, чтобы успел найти свой ник на большом экране
+    public static readonly TimeSpan GuestDuration = TimeSpan.FromSeconds(60);
 
     // Окупаемость: сколько вложено в клуб и сколько чистой прибыли уже заработано до этой недели
     public const decimal Investment = 1_100_000m;   // 6 ПК, мебель, ремонт, сеть

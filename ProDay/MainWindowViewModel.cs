@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Club.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using QRCoder;
 
 namespace ProDay;
 
@@ -50,6 +53,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private string _toast = "";
     [ObservableProperty] private double _toastOpacity;
 
+    public string PhoneUrl => PhoneServer.Url;
+    public Bitmap PhoneQr { get; } = new(new MemoryStream(PngByteQRCodeHelper.GetQRCode(PhoneServer.Url, QRCodeGenerator.ECCLevel.M, 10)));
+
     public bool ShowMinutes => !ShowDaily;
     partial void OnShowDailyChanged(bool value) => OnPropertyChanged(nameof(ShowMinutes));
 
@@ -59,6 +65,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel()
     {
+        PhoneServer.Start();
         new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Normal, async (_, _) => await Refresh()).Start();
         new DispatcherTimer(TimeSpan.FromMilliseconds(30), DispatcherPriority.Render, (_, _) => AnimateRevenue()).Start();
         new DispatcherTimer(TimeSpan.FromSeconds(2), DispatcherPriority.Normal, async (_, _) =>
@@ -97,6 +104,7 @@ public partial class MainWindowViewModel : ObservableObject
                 var item = LogItemVm.From(a, !_first);
                 Log.Insert(0, item);
                 if (!_first) _ = UnmarkLater(item);
+                if (!_first && a.Source == PhoneServer.Source && a.Type != "game") _ = ShowToast(a.Message);
             }
             if (log.Count > 0) _lastLogId = Math.Max(_lastLogId, log.Max(a => a.Id));
             while (Log.Count > 80) Log.RemoveAt(Log.Count - 1);
@@ -164,6 +172,14 @@ public partial class MainWindowViewModel : ObservableObject
         IncrementOpacity = 1;
         await Task.Delay(2200);
         IncrementOpacity = 0;
+    }
+
+    async Task ShowToast(string text)
+    {
+        Toast = "С телефона: " + text;
+        ToastOpacity = 1;
+        await Task.Delay(4000);
+        if (Toast.EndsWith(text)) ToastOpacity = 0;
     }
 
     static async Task UnmarkLater(LogItemVm item)

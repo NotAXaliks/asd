@@ -24,7 +24,8 @@ public static class ClubService
     public static event Action<string>? Error;
     public static event Action<string>? Done;
 
-    static async Task Run(Func<ClubDb, Task<string?>> action)
+    // Возвращает сообщение об успехе или null, если действие не выполнено
+    static async Task<string?> Run(Func<ClubDb, Task<string?>> action)
     {
         try
         {
@@ -33,10 +34,12 @@ public static class ClubService
             await db.SaveChangesAsync();
             if (msg != null) Done?.Invoke(msg);
             Changed?.Invoke();
+            return msg;
         }
         catch (Exception e)
         {
             Error?.Invoke(e.InnerException?.Message ?? e.Message);
+            return null;
         }
     }
 
@@ -52,7 +55,7 @@ public static class ClubService
 
     // ───────── Действия ─────────
 
-    public static Task TogglePowerAsync(int pcId, string? source = null) => Run(async db =>
+    public static Task<string?> TogglePowerAsync(int pcId, string? source = null) => Run(async db =>
     {
         var pc = await db.Pcs.FindAsync(pcId);
         if (pc == null) return null;
@@ -73,7 +76,7 @@ public static class ClubService
         return $"{pc.Name} выключен";
     });
 
-    public static Task StartSessionAsync(int pcId, string player, int gameId, Tariff tariff,
+    public static Task<string?> StartSessionAsync(int pcId, string player, int gameId, Tariff tariff,
         TimeSpan? realDuration = null, string? source = null) => Run(async db =>
     {
         var pc = await db.Pcs.FindAsync(pcId);
@@ -104,7 +107,7 @@ public static class ClubService
         return $"+{Fmt.Rub(price)}";
     });
 
-    public static Task ExtendAsync(int pcId, string? source = null) => Run(async db =>
+    public static Task<string?> ExtendAsync(int pcId, string? source = null) => Run(async db =>
     {
         var pc = await db.Pcs.FindAsync(pcId);
         var s = await Active(db, pcId);
@@ -116,7 +119,7 @@ public static class ClubService
         return $"+{Fmt.Rub(price)}";
     });
 
-    public static Task EndSessionAsync(int pcId, string? source = null) => Run(async db =>
+    public static Task<string?> EndSessionAsync(int pcId, string? source = null) => Run(async db =>
     {
         var pc = await db.Pcs.FindAsync(pcId);
         var s = await Active(db, pcId);
@@ -127,7 +130,7 @@ public static class ClubService
         return $"{pc.Name} свободен";
     });
 
-    public static Task ChangeGameAsync(int pcId, int gameId, string? source = null) => Run(async db =>
+    public static Task<string?> ChangeGameAsync(int pcId, int gameId, string? source = null) => Run(async db =>
     {
         var pc = await db.Pcs.FindAsync(pcId);
         var s = await Active(db, pcId);
@@ -138,7 +141,7 @@ public static class ClubService
         return g.Name;
     });
 
-    public static Task SellAsync(int pcId, MenuItem item, string? source = null) => Run(async db =>
+    public static Task<string?> SellAsync(int pcId, MenuItem item, string? source = null) => Run(async db =>
     {
         var pc = await db.Pcs.FindAsync(pcId);
         if (pc == null) return null;
@@ -148,7 +151,7 @@ public static class ClubService
         return $"+{Fmt.Rub(item.Price)}";
     });
 
-    public static Task TopUpAsync(string nickname, TopUpOption opt, string? source = null) => Run(async db =>
+    public static Task<string?> TopUpAsync(string nickname, TopUpOption opt, string? source = null) => Run(async db =>
     {
         nickname = string.IsNullOrWhiteSpace(nickname) ? Catalog.RandomNick() : nickname.Trim();
         var pl = await db.Players.FirstOrDefaultAsync(x => x.Nickname == nickname);
@@ -193,7 +196,12 @@ public static class ClubService
 
         // Каждое событие — в своём диапазоне, без «проваливания» в соседние ветки
         var roll = rnd.NextDouble();
-        Pc? busy = Pick(p => p.Status == PcStatus.Busy);
+        // Сессии гостей с телефона симуляция не трогает (не завершает, не меняет игру)
+        List<int> guestPcs;
+        await using (var db = new ClubDb())
+            guestPcs = await db.Sessions.Where(s => s.EndedAt == null && s.EndsAt - s.StartedAt >= Biz.GuestDuration)
+                .Select(s => s.PcId).ToListAsync();
+        Pc? busy = Pick(p => p.Status == PcStatus.Busy && !guestPcs.Contains(p.Id));
         Pc? free = Pick(p => p.Status == PcStatus.Free);
         Pc? off = Pick(p => p.Status == PcStatus.Off);
 

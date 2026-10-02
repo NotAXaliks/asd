@@ -19,6 +19,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <None Include="phone.html" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\Club.Core\Club.Core.csproj" />
   </ItemGroup>
 </Project>

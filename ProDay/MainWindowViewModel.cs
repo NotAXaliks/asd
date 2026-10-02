@@ -53,6 +53,8 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private string _toast = "";
     [ObservableProperty] private double _toastOpacity;
 
+    public string DbName { get; } = Environment.GetEnvironmentVariable("PRODAY_DB") != null ? "база на сервере" : "локальная база";
+
     // Страница брони для телефонов (проект Phone, крутится на сервере)
     public string PhoneUrl { get; } = Environment.GetEnvironmentVariable("PRODAY_PHONE_URL") ?? "http://213.226.112.230:5080/";
     public Bitmap PhoneQr => new(new MemoryStream(PngByteQRCodeHelper.GetQRCode(PhoneUrl, QRCodeGenerator.ECCLevel.M, 10)));

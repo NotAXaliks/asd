@@ -22,7 +22,7 @@
                            IsVisible="{Binding !DbOnline}" MaxWidth="420" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <Ellipse Classes="live" Width="8" Height="8" Fill="{StaticResource Free}"/>
-                    <TextBlock Classes="muted" Text="онлайн" FontSize="13"/>
+                    <TextBlock Classes="muted" Text="{Binding DbName, StringFormat='онлайн · {0}'}" FontSize="13"/>
                 </StackPanel>
                 <TextBlock Classes="num" Text="{Binding Clock}" FontSize="18" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
